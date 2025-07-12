@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 "use client"; // this is to let next.js know that it should run this in the client side
 
 import { z } from "zod";
@@ -9,7 +9,8 @@ import CustomFormField from "../CustomFormField";
 import SubmitButton from "../SubmitButton";
 import { useState } from "react";
 import { UserFormValidation } from "@/lib/validation";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
+import { createUser } from "@/lib/patient.actions";
 
 export enum FormFieldType {
   INPUT = "input",
@@ -24,8 +25,8 @@ export enum FormFieldType {
 
 
 const PatientForm = () => {
-  // const router  = useRouter(); 
-  const [isLoading, setIsLoading] = useState(false);
+const router = useRouter();
+const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof UserFormValidation>>({
     resolver: zodResolver(UserFormValidation),
@@ -36,19 +37,21 @@ const PatientForm = () => {
     },
   });
 
-  function onSubmit({name, email, phone}: z.infer<typeof UserFormValidation>) {
+  async function onSubmit({name, email, phone}: z.infer<typeof UserFormValidation>) {
+  setIsLoading(true);
+  try {
+    const userData = { name, email, phone };
+    const user = await createUser(userData);
 
-    setIsLoading(true);
-    try {
-      // const userData= { name, email, phone };
-      // const user = await createUser(userData)
-
-      // if(user) router.push(`/patients/${user.id}/register`);
+    if(user) {
+      router.push(`/patients/${user.$id}/register`);
     }
-    catch (error) {
-      console.error("Error submitting form:", error);
-    } 
+  } catch (error) {
+    console.error("Error submitting form:", error);
+  } finally {
+    setIsLoading(false);
   }
+}
 
   return (
     <Form {...form}>
